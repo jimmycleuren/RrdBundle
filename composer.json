@@ -1,0 +1,23 @@
+{
+    "name" : "jimmycleuren/rrdbundle",
+    "description" : "A wrapper around the PHP RRD functions",
+    "type" : "symfony-bundle",
+    "authors" : [{
+        "name" : "Jimmy Cleuren",
+        "email" : "jimmy.cleuren@gmail.com"
+    }],
+    "keywords" : [
+        "rrd bundle"
+    ],
+    "license" : [
+        "MIT"
+    ],
+    "require" : {
+    },
+    "autoload" : {
+        "psr-0" : {
+            "jimmycleuren\\RrdBundle" : ""
+        }
+    },
+    "target-dir" : "jimmycleuren/RrdBundle"
+}
