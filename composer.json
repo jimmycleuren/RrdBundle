@@ -1,5 +1,5 @@
 {
-    "name" : "jimmycleuren/rrdbundle",
+    "name" : "jimmycleuren/rrd-bundle",
     "description" : "A wrapper around the PHP RRD functions",
     "type" : "symfony-bundle",
     "authors" : [{
