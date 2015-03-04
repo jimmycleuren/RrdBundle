@@ -19,5 +19,5 @@
             "jimmycleuren\\RrdBundle" : ""
         }
     },
-    "target-dir" : "jimmycleuren/RrdBundle"
+    "target-dir" : "JimmyCleuren/Bundle/RrdBundle"
 }
