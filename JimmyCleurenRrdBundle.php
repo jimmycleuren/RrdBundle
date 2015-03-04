@@ -1,6 +1,6 @@
 <?php
 
-namespace JimmyCleuren\RrdBundle;
+namespace JimmyCleuren\Bundle\RrdBundle;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;

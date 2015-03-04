@@ -16,7 +16,7 @@
     },
     "autoload" : {
         "psr-0" : {
-            "jimmycleuren\\RrdBundle" : ""
+            "JimmyCleuren\\Bundle\\RrdBundle" : ""
         }
     },
     "target-dir" : "JimmyCleuren/Bundle/RrdBundle"
