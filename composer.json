@@ -13,6 +13,7 @@
         "MIT"
     ],
     "require" : {
+        "ext-rrd": "*"
     },
     "autoload" : {
         "psr-0" : {

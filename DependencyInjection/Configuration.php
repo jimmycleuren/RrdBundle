@@ -1,6 +1,6 @@
 <?php
 
-namespace jimmycleuren\Bundle\RrdBundle\DependencyInjection;
+namespace JimmyCleuren\Bundle\RrdBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -18,7 +18,13 @@ class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
-        $treeBuilder->root('rrdbundle');
+        $treeBuilder->root('rrdbundle')
+            ->children()
+                ->scalarNode('path')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                ->end()
+            ->end();
 
         // Here you should define the parameters that are allowed to
         // configure your bundle. See the documentation linked above for
