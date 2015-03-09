@@ -32,7 +32,7 @@ class RrdDatabase
         $this->container->get('logger')->info("Creating RRD file ".$this->filename);
         $this->createPath();
 
-        $start = date("U") - 1;
+        $start = date("U") - $this->config['step'];
 
         $options = array(
             "--start", $start,
@@ -130,7 +130,7 @@ class RrdDatabase
                 strtoupper($value['graph_type']),
                 $key,
                 $value['graph_color'],
-                $value['graph_legend']."\t"
+                $value['graph_legend']
             );
             $options[] = sprintf(
                 "GPRINT:data_%s:%s:%s",
@@ -167,7 +167,6 @@ class RrdDatabase
                 if (!file_exists($path)) {
                     mkdir($path);
                 }
-                //chmod( $path, 777 );
                 $base = $path;
             }
         }

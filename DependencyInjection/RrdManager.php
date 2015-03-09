@@ -28,4 +28,9 @@ class RrdManager
         }
         return new RrdDatabase($this->container, $this->path.$filename, $this->types[$type], $create);
     }
+
+    public function createSummary()
+    {
+        return new RrdSummary($this->container, $this->path);
+    }
 }
