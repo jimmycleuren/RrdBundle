@@ -32,7 +32,7 @@ class RrdDatabase
         $this->container->get('logger')->info("Creating RRD file ".$this->filename);
         $this->createPath();
 
-        $start = date("U") - $this->config['step'];
+        $start = date("U") - 1;
 
         $options = array(
             "--start", $start,
@@ -100,7 +100,7 @@ class RrdDatabase
     {
         $imageFile = tempnam($this->container->getParameter('tmp_folder'), 'image');
         $options = array(
-            "--slope-mode",
+            //"--slope-mode",
             "--start", $start,
             "--title=$title",
             //"--vertical-label=User login attempts",
@@ -118,22 +118,14 @@ class RrdDatabase
         }
         foreach ($this->config['datasources'] as $key => $value) {
             $options[] = sprintf(
-                "CDEF:data_%s=%s,%s,*",
-                $key,
-                $key,
-                $this->config['step']
-            );
-        }
-        foreach ($this->config['datasources'] as $key => $value) {
-            $options[] = sprintf(
-                "%s:data_%s%s:%s",
+                "%s:%s%s:%s",
                 strtoupper($value['graph_type']),
                 $key,
                 $value['graph_color'],
                 $value['graph_legend']
             );
             $options[] = sprintf(
-                "GPRINT:data_%s:%s:%s",
+                "GPRINT:%s:%s:%s",
                 $key,
                 strtoupper($value['graph_function']),
                 "cur\:%6.2lf"

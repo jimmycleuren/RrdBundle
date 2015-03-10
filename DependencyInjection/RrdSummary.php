@@ -76,7 +76,7 @@ class RrdSummary
                     "CDEF:data_%s=%s,%s,*",
                     $datasource['name'],
                     implode(",", $sources),
-                    7200
+                    1
                 );
             }
         }
@@ -98,6 +98,7 @@ class RrdSummary
             $options[] = "COMMENT:\\n";
         }
 
+        var_dump($options);
         $return = rrd_graph($imageFile, $options);
         if (!$return) {
             throw new RrdException(rrd_error());
