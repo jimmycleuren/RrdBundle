@@ -16,6 +16,8 @@ class RrdDatabase
         $this->container = $container;
         $this->filename = $filename;
         $this->config = $config;
+		
+		$this->createDataSources();
 
         if (!$create && !file_exists($this->filename)) {
             throw new RrdDatabaseNotFoundException($this->filename);
@@ -26,6 +28,18 @@ class RrdDatabase
             $this->create();
         }
     }
+	
+	private function createDataSources()
+	{
+		foreach ($this->config['datasources'] as $key => $value) {
+			if(preg_match("/([\d]+)\.\.([\d]+)/", $key, $matches)) {
+				for($i = $matches[1]; $i <= $matches[2]; $i++) {
+					$this->config['datasources'][$i] = $value;
+				}
+				unset($this->config['datasources'][$key]);
+			}
+		}
+	}
 
     private function create()
     {
