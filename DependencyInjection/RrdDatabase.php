@@ -16,8 +16,7 @@ class RrdDatabase
         $this->container = $container;
         $this->filename = $filename;
         $this->config = $config;
-		
-		$this->createDataSources();
+        $this->createDataSources();
 
         if (!$create && !file_exists($this->filename)) {
             throw new RrdDatabaseNotFoundException($this->filename);
@@ -28,18 +27,18 @@ class RrdDatabase
             $this->create();
         }
     }
-	
-	private function createDataSources()
-	{
-		foreach ($this->config['datasources'] as $key => $value) {
-			if(preg_match("/([\d]+)\.\.([\d]+)/", $key, $matches)) {
-				for($i = $matches[1]; $i <= $matches[2]; $i++) {
-					$this->config['datasources'][$i] = $value;
-				}
-				unset($this->config['datasources'][$key]);
-			}
-		}
-	}
+
+    private function createDataSources()
+    {
+        foreach ($this->config['datasources'] as $key => $value) {
+            if(preg_match("/([\d]+)\.\.([\d]+)/", $key, $matches)) {
+                for($i = $matches[1]; $i <= $matches[2]; $i++) {
+                    $this->config['datasources'][$i] = $value;
+                }
+                unset($this->config['datasources'][$key]);
+            }
+        }
+    }
 
     private function create()
     {
@@ -88,7 +87,12 @@ class RrdDatabase
         foreach ($this->config['datasources'] as $key => $value) {
             $id = "ds[$key].type";
             if (!isset($info[$id]) || $info[$id] != strtoupper($value['type'])) {
-                throw new RrdException("Type for datasource '$key'' is not equal");
+                throw new RrdException(sprintf(
+                    "Type for datasource '%s' is not equal (%s vs %s)",
+                    $key,
+                    $info[$id],
+                    strtoupper($value['type'])
+                ));
             }
         }
     }
@@ -110,7 +114,7 @@ class RrdDatabase
         }
     }
 
-    public function graph($title, $start)
+    public function graph($title, $start, $datasources = array())
     {
         $imageFile = tempnam($this->container->getParameter('tmp_folder'), 'image');
         $options = array(
@@ -122,34 +126,39 @@ class RrdDatabase
         );
 
         foreach ($this->config['datasources'] as $key => $value) {
-            $options[] = sprintf(
-                "DEF:%s=%s:%s:%s",
-                $key,
-                $this->filename,
-                $key,
-                strtoupper($value['graph_function'])
-            );
+            if(count($datasources) == 0 || in_array($key, $datasources)) {
+                $options[] = sprintf(
+                    "DEF:%s=%s:%s:%s",
+                    $key,
+                    $this->filename,
+                    $key,
+                    strtoupper($value['graph_function'])
+                );
+            }
         }
         foreach ($this->config['datasources'] as $key => $value) {
-            $options[] = sprintf(
-                "%s:%s%s:%s",
-                strtoupper($value['graph_type']),
-                $key,
-                $value['graph_color'],
-                $value['graph_legend']
-            );
-            $options[] = sprintf(
-                "GPRINT:%s:%s:%s",
-                $key,
-                strtoupper($value['graph_function']),
-                "cur\:%6.2lf"
-            );
-            $options[] = "COMMENT:\\n";
+            if(count($datasources) == 0 || in_array($key, $datasources)) {
+                $options[] = sprintf(
+                    "%s:%s%s:%s",
+                    strtoupper($value['graph_type']),
+                    $key,
+                    $value['graph_color'],
+                    $value['graph_legend']
+                );
+                $options[] = sprintf(
+                    "GPRINT:%s:%s:%s",
+                    $key,
+                    strtoupper($value['graph_function']),
+                    "cur\:%6.2lf"
+                );
+                $options[] = "COMMENT:\\n";
+            }
         }
 
         $return = rrd_graph($imageFile, $options);
-        if (!$return) {
-            throw new RrdException(rrd_error());
+        $error = rrd_error();
+        if (!$return || $error) {
+            throw new RrdException($error);
         }
 
         return $imageFile;
@@ -158,6 +167,48 @@ class RrdDatabase
     public function close()
     {
 
+    }
+
+    public function getTotal($datasource, $start, $end, $function = "average")
+    {
+        if(!isset($this->config['datasources'][$datasource])) {
+            throw new RrdException("Datasource $datasource not found");
+        }
+
+        $result = rrd_graph("/dev/null", array(
+            "--start", $start,
+            "--end", $end,
+            "DEF:total=$this->filename:$datasource:" . strtoupper($function),
+            "VDEF:result=total,TOTAL",
+            "PRINT:result:%lf"
+        ) );
+
+        if(!$result) {
+            throw new RrdException(rrd_error());
+        }
+
+        return $result['calcpr'][0];
+    }
+
+    public function getPercentile($datasource, $start, $end, $percentile = 95, $function = "max")
+    {
+        if(!isset($this->config['datasources'][$datasource])) {
+            throw new RrdException("Datasource $datasource not found");
+        }
+
+        $result = rrd_graph("/dev/null", array(
+            "--start", $start,
+            "--end", $end,
+            "DEF:total=$this->filename:$datasource:" . strtoupper($function),
+            "VDEF:result=total,$percentile,PERCENT",
+            "PRINT:result:%lf"
+        ) );
+
+        if(!$result) {
+            throw new RrdException(rrd_error());
+        }
+
+        return $result['calcpr'][0];
     }
 
     private function createPath()

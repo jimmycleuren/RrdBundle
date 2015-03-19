@@ -20,7 +20,9 @@ class RrdSummary
 
     public function addFile($filename)
     {
-        $this->files[] = $this->path . $filename;
+        if (!in_array($this->path . $filename, $this->files)) {
+            $this->files[] = $this->path . $filename;
+        }
     }
 
     public function addDatasource($name, $function, $type, $color, $legend)
@@ -43,9 +45,14 @@ class RrdSummary
 
         foreach($this->files as $file) {
             foreach ($this->datasources as $datasource) {
+                $info = rrd_lastupdate($file);
                 if(!file_exists($file)) {
                     $exclude[] = md5($file . "-" . $datasource['name']);
+                } elseif($info['data'][0] == 'U') {
+                    $exclude[] = md5($file . "-" . $datasource['name']);
                 } else {
+                    //var_dump($file, rrd_fetch($file, array( "AVERAGE", "--resolution", "60", "--start", "-4h", "--end", "start+1h" ))['data']['up']);
+                    //var_dump($file, rrd_lastupdate($file));
                     $options[] = sprintf(
                         "DEF:%s=%s:%s:%s",
                         md5($file . "-" . $datasource['name']),
@@ -98,12 +105,166 @@ class RrdSummary
             $options[] = "COMMENT:\\n";
         }
 
-        var_dump($options);
         $return = rrd_graph($imageFile, $options);
         if (!$return) {
             throw new RrdException(rrd_error());
         }
 
         return $imageFile;
+    }
+
+    public function getTotal($start, $end, $function = "average")
+    {
+        $options = array(
+            "--start", $start,
+            "--end", $end,
+        );
+
+        foreach ($this->files as $file) {
+            foreach ($this->datasources as $datasource) {
+                $options[] = sprintf(
+                    "DEF:%s=%s:%s:%s",
+                    "total_" . $datasource['name'] . "_" . md5($file),
+                    $file,
+                    $datasource['name'],
+                    strtoupper($function)
+                );
+            }
+        }
+
+        $sources = array();
+        $first = true;
+        foreach($this->files as $key => $file) {
+            foreach ($this->datasources as $datasource) {
+                if ($first) {
+                    $sources[] = "total_" . $datasource['name'] . "_" . md5($file);
+                    $first = false;
+                } else {
+                    $sources[] = "total_" . $datasource['name'] . "_" . md5($file) . ",+";
+                }
+            }
+        }
+        if (count($sources) > 0) {
+            $options[] = sprintf(
+                "CDEF:total=%s,%s,*",
+                implode(",", $sources),
+                1
+            );
+        }
+
+        $options[] = "VDEF:result=total,TOTAL";
+        $options[] = "PRINT:result:%lf";
+
+        //var_dump($options);
+
+        $result = rrd_graph("/dev/null", $options);
+
+        if(!$result) {
+            throw new RrdException(rrd_error());
+        }
+
+        return $result['calcpr'][0];
+    }
+
+    public function getPercentile($start, $end, $percentile = 95, $function = "max")
+    {
+        $options = array(
+            "--start", $start,
+            "--end", $end,
+        );
+
+        foreach ($this->files as $file) {
+            foreach ($this->datasources as $datasource) {
+                $options[] = sprintf(
+                    "DEF:%s=%s:%s:%s",
+                    "total_" . $datasource['name'] . "_" . md5($file),
+                    $file,
+                    $datasource['name'],
+                    strtoupper($function)
+                );
+            }
+        }
+
+        $sources = array();
+        $first = true;
+        foreach($this->files as $key => $file) {
+            foreach ($this->datasources as $datasource) {
+                if ($first) {
+                    $sources[] = "total_" . $datasource['name'] . "_" . md5($file);
+                    $first = false;
+                } else {
+                    $sources[] = "total_" . $datasource['name'] . "_" . md5($file) . ",+";
+                }
+            }
+        }
+        if (count($sources) > 0) {
+            $options[] = sprintf(
+                "CDEF:total=%s,%s,*",
+                implode(",", $sources),
+                1
+            );
+        }
+
+        $options[] = "VDEF:result=total,$percentile,PERCENT";
+        $options[] = "PRINT:result:%lf";
+
+        $result = rrd_graph("/dev/null", $options);
+
+        if(!$result) {
+            throw new RrdException(rrd_error());
+        }
+
+        return $result['calcpr'][0];
+    }
+
+    public function getAverage($start, $end, $function = "average")
+    {
+        $options = array(
+            "--start", $start,
+            "--end", $end,
+        );
+
+        foreach ($this->files as $file) {
+            foreach ($this->datasources as $datasource) {
+                $options[] = sprintf(
+                    "DEF:%s=%s:%s:%s",
+                    "total_" . $datasource['name'] . "_" . md5($file),
+                    $file,
+                    $datasource['name'],
+                    strtoupper($function)
+                );
+            }
+        }
+
+        $sources = array();
+        $first = true;
+        foreach($this->files as $key => $file) {
+            foreach ($this->datasources as $datasource) {
+                if ($first) {
+                    $sources[] = "total_" . $datasource['name'] . "_" . md5($file);
+                    $first = false;
+                } else {
+                    $sources[] = "total_" . $datasource['name'] . "_" . md5($file) . ",+";
+                }
+            }
+        }
+        if (count($sources) > 0) {
+            $options[] = sprintf(
+                "CDEF:total=%s,%s,*",
+                implode(",", $sources),
+                1
+            );
+        }
+
+        $options[] = "VDEF:result=total,AVERAGE";
+        $options[] = "PRINT:result:%lf";
+
+        $result = rrd_graph("/dev/null", $options);
+
+        if(!$result) {
+            throw new RrdException(rrd_error());
+        }
+
+        return $result['calcpr'][0];
     }
 }
