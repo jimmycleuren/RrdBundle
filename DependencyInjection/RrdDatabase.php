@@ -148,8 +148,20 @@ class RrdDatabase
                 $options[] = sprintf(
                     "GPRINT:%s:%s:%s",
                     $key,
-                    strtoupper($value['graph_function']),
-                    "cur\:%6.2lf"
+                    'LAST',
+                    "cur\:%7.2lf"
+                );
+                $options[] = sprintf(
+                    "GPRINT:%s:%s:%s",
+                    $key,
+                    'AVERAGE',
+                    "avg\:%7.2lf"
+                );
+                $options[] = sprintf(
+                    "GPRINT:%s:%s:%s",
+                    $key,
+                    'MAX',
+                    "max\:%7.2lf"
                 );
                 $options[] = "COMMENT:\\n";
             }
