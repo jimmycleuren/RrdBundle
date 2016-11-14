@@ -10,6 +10,7 @@ class RrdDatabase
     private $container = null;
     private $filename = null;
     private $config = null;
+    private $lastUpdate = null;
 
     public function __construct($container, $filename, $config, $create)
     {
@@ -26,6 +27,12 @@ class RrdDatabase
         } else {
             $this->create();
         }
+    }
+
+    public function getLastUpdate()
+    {
+        $update = rrd_lastupdate($this->filename);
+        return $update["last_update"];
     }
 
     private function createDataSources()
