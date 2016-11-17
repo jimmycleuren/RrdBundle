@@ -129,7 +129,7 @@ class RrdDatabase
             "--start", $start,
             "--title=$title",
             //"--vertical-label=User login attempts",
-            "--lower=0",
+            "--lower-limit=0",
         );
 
         foreach ($this->config['datasources'] as $key => $value) {
