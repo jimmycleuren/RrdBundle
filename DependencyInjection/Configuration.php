@@ -17,8 +17,15 @@ class Configuration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-        $treeBuilder->root('rrdbundle')
+        $treeBuilder = new TreeBuilder('rrdbundle');
+        
+        if (method_exists($treeBuilder, 'getRootNode')) {
+            $rootNode = $treeBuilder->getRootNode();
+        } else {
+            $rootNode = $treeBuilder->root('rrdbundle');
+        }
+        
+        $rootNode
             ->children()
                 ->scalarNode('path')
                     ->isRequired()
