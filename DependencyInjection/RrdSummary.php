@@ -112,6 +112,68 @@ class RrdSummary
 
         return $imageFile;
     }
+    
+    public function graphIndividual($title, $start)
+    {
+        $exclude = array();
+        $imageFile = tempnam($this->container->getParameter('tmp_folder'), 'image');
+        $options = array(
+            "--slope-mode",
+            "--start", $start,
+            "--title=$title",
+            //"--vertical-label=User login attempts",
+            "--lower-limit=0",
+        );
+
+        foreach($this->files as $file) {
+            foreach ($this->datasources as $datasource) {
+                $info = rrd_lastupdate($file);
+                if(!file_exists($file)) {
+                    $exclude[] = md5($file . "-" . $datasource['name']);
+                } elseif($info['data'][0] == 'U') {
+                    $exclude[] = md5($file . "-" . $datasource['name']);
+                } else {
+                    $options[] = sprintf(
+                        "DEF:%s=%s:%s:%s",
+                        md5($file . "-" . $datasource['name']),
+                        $file,
+                        $datasource['name'],
+                        strtoupper($datasource['function'])
+                    );
+                }
+            }
+        }
+
+        foreach($this->files as $file) {
+            foreach ($this->datasources as $datasource) {
+               $id = md5($file . "-" . $datasource['name']);
+               $parts = explode("/", $file);
+               $filename = str_replace(".rrd", "", $parts[count($parts) - 1]);
+               $options[] = sprintf(
+                    "%s:%s%s:%s",
+                    strtoupper($datasource['type']),
+                    $id,
+                    $datasource['color'],
+                    $filename . " - " . $datasource['legend']
+                );
+                $options[] = sprintf(
+                    "GPRINT:%s:%s:%s",
+                    $id,
+                    strtoupper($datasource['function']),
+                    "cur\:%6.2lf"
+                );
+                $options[] = "COMMENT:\\n";
+            }
+        }
+
+        $return = rrd_graph($imageFile, $options);
+        if (!$return) {
+            throw new RrdException(rrd_error());
+        }
+
+        return $imageFile;
+    }
+
 
     public function getTotal($start, $end, $function = "average")
     {
