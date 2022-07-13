@@ -34,6 +34,17 @@ class RrdDatabase
         $update = rrd_lastupdate($this->filename);
         return $update["last_update"];
     }
+    
+    public function getLastUpdateValues()
+    {
+        $data = [];
+        $temp = rrd_lastupdate($this->filename);
+        foreach ($temp['ds_navm'] as $key => $name) {
+            $data[$name] = $temp["data"][$key];
+        }
+
+        return $data;
+    }
 
     private function createDataSources()
     {
